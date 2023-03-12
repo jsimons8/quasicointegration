@@ -36,7 +36,7 @@ The code archive supports the standard gnu toolchain with `ninja` as the recomme
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++-12 -G Ninja quasicointegration
 ~~~~
 
-Then, compile with
+Then, compile with the command:
 
 ```
 cmake --build ./cmake-build-debug --target quasicointegration
