@@ -93,7 +93,8 @@ int main(int argc, char *argv[]) {
             //write output for empirical power
             BootStrapCriticalValue.FormatOutput();
             BootStrapCriticalValue.WriteOutput(outputpath);
-            MyGridEstimate.WriteOutput(outputpath);
+            MyGridEstimate.WriteOutputGrid(outputpath,target_size,lag_order);
+            MyGridEstimate.WriteOutput(target_size,lag_order,outputpath);
 
 
 

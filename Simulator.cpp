@@ -292,9 +292,10 @@ void Simulator::BootstrapCriticalValue(const Ref<const Eigen::MatrixXd> &F,
      *The plan: first, set up a simulation, then vary the critical value until the desired size is achieved.
      */
     this->bootstrap = true;
+    //cout << "F is " << F << endl;
+    //cout << "Sigma is " << Sigma << endl;
     this->RunSimulations(F,Sigma,T,this->critical_value,0,false);
     //initialise
-    //cout << "F is " << F << endl;
     this->FindInterval(this->critical_value);
     const int center_position = this->grid_points_null/2;
     //1,this->grid_points_null

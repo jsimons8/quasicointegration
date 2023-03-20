@@ -252,10 +252,9 @@ int RRR::operator()(const Eigen::VectorXd& parameter_vector, Eigen::VectorXd &fv
 
     int p = this->S00.cols();
     int q = 1;
+    const int s = 1; //number of cointegrating relations treated as known
 
     Map<const MatrixXd> Dp(parameter_vector.data(), p - q, q);
-
-
     /*
 
     //1. matricise the D guess into an R_lu guess and into b
@@ -273,6 +272,13 @@ int RRR::operator()(const Eigen::VectorXd& parameter_vector, Eigen::VectorXd &fv
     b = lu.kernel();
 
     */
+
+    /*
+     * to accommodate multiple parameters here, we need to set s=1, then we should find eigenvalues rho tilde
+     * and eigenvalue lambda tilde. Currently, we are only finding eigenvalues rho tilde and set s=r, i.e. all cointegrating
+     * relations are known.
+     */
+
     MatrixXd b(p,p-q);
     b.block(0,0,p-q,p-q) = MatrixXd::Identity(p-q,p-q);
     b.block(p-q,0,q,p-q) = -Dp.transpose();

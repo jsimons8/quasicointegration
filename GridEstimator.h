@@ -50,7 +50,9 @@ public:
                        const bool & bootstrap);
 
 
-    void WriteOutput(const std::string & outputpath);
+    void WriteOutputGrid(const std::string &outputPath,
+                     const double & target_size,
+                     const int & lag_order);
     Eigen::MatrixXd ml_estimates;
     Eigen::MatrixXd ml_estimate;
     Eigen::ArrayXd chosen_weights;
@@ -101,6 +103,10 @@ public:
 
     void FindInterval3(const double & critical_value);
 
+    void WriteOutput(const double &target_size,
+                     const int & lag_order,
+                     const std::string &outputPath);
+
 
     //make tensor cousins to f and g
     Eigen::Tensor <double,4> f_t;
@@ -121,7 +127,7 @@ public:
 
     Eigen::Array<bool,1,Eigen::Dynamic> rejprobs;
 
-    Eigen::Array<double,1,Eigen::Dynamic> marginal_interval;
+    Eigen::MatrixXd marginal_interval;
 
 
 

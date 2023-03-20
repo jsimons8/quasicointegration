@@ -69,7 +69,7 @@ GridEstimator::GridEstimator(bool autocentred,
     this->weighted_null_density = Eigen::ArrayXXd::Zero(1,grid_points_null);
     this->rejprobs = Eigen::Array<bool,1,Eigen::Dynamic>::Zero(1,M);
 
-    this->marginal_interval = Eigen::Array<double,1,Eigen::Dynamic>::Zero(1,2);
+    this->marginal_interval = Eigen::MatrixXd::Zero(2,5);
 
     //set up grid for imposed root
     std::vector<double> delta_vec_sqrt = linspace(0.,(M-1)*.25,M);
@@ -341,14 +341,14 @@ void GridEstimator::FindInterval3(const double &critical_value) {
     Eigen::array<int,3> shape_extender({root_dim,this->num_experiments,1});
     Eigen::array<int,3> g_stretcher({1,1,this->grid_points_null});
 
-    std::cout << "g_bar_t is " << g_bar_t.reshape(shape_extender).broadcast(g_stretcher) << std::endl;
-    std::cout << "f_bar_t is " << f_bar_t << std::endl;
+    //std::cout << "g_bar_t is " << g_bar_t.reshape(shape_extender).broadcast(g_stretcher) << std::endl;
+    //std::cout << "f_bar_t is " << f_bar_t << std::endl;
 
 
 
     this->rejections = g_bar_t.reshape(shape_extender).broadcast(g_stretcher) > critical_value + f_bar_t;
 
-    std::cout << "rejection probabilities on null grid are\n" << this->rejections << std::endl;
+    std::cout << "Rejections on null grid for EMW are\n" << this->rejections << std::endl;
 
     //this->weighted_null_density = this->f.colwise().maxCoeff() + (this->f.rowwise() - this->f.colwise().maxCoeff()).exp().colwise().sum().log();
 
@@ -357,6 +357,12 @@ void GridEstimator::FindInterval3(const double &critical_value) {
     //Time for Soeren
     //this->rejections_johansen = Eigen::Tensor<bool,3>(1,num_experiments,grid_points_null);
     this->rejections_johansen = this->johansen_lr_stats > this->joh_critval;
+
+    std::cout << "Rejections on null grid for Johansen are\n" << this->rejections_johansen << std::endl;
+
+
+
+
 
 
 }
@@ -380,6 +386,8 @@ void GridEstimator::FindInterval2(const double & critical_value) {
     //find not rejected values
     bool first = true;
     bool last2 = false;
+
+    //row 1 EMW
     for(int n=0;n<this->null_hyp_grid.size();n++)
     {
         if(!this->rejprobs(n) && first)
@@ -422,9 +430,80 @@ void GridEstimator::SetALambdaCorrespondence(const double & midpoint, const int 
     this->a_lambda_grid_allocated_question_mark = true;
 }
 
-void GridEstimator::WriteOutput(const std::string &outputPath) {
+void GridEstimator::WriteOutputGrid(const std::string &outputPath,
+                                const double & target_size,
+                                const int & lag_order) {
     std::string filename = "grid_estimate";
-    writeToCSVfile(outputPath+filename+".csv",this->ml_estimates);
+    //attach some extra information
+    MatrixXd dgp_info(this->ml_estimates.rows(),3);
+    for(int i = 0; i<dgp_info.rows();i++)
+    {
+        dgp_info(i,0) = target_size;
+        dgp_info(i,1) = this->lambda_lu_vec.back();
+        dgp_info(i,2) = lag_order;
+    }
+
+    MatrixXd output_grid(this->ml_estimates.rows(),this->ml_estimates.cols()+3);
+    output_grid << this->ml_estimates, dgp_info;
+    writeToCSVfile(outputPath+filename+".csv",output_grid);
+}
+
+void GridEstimator::WriteOutput(const double &target_size,const int & lag_order,
+                                const std::string &outputPath) {
+
+    //find not rejected values
+    bool first = true;
+    bool last = false;
+
+    //row 1 EMW
+
+    for(int n=0;n<this->null_hyp_grid.size();n++)
+    {
+        if(!this->rejections(0,0,n) && first)
+        {
+            this->marginal_interval(0,0) = this->null_hyp_grid[n];
+            first = false;
+        }
+        if(this->rejections(0,0,n) && !first && !last)
+        {
+            this->marginal_interval(0,1) = this->null_hyp_grid[n-1];
+            last = true;
+        }
+    }
+    first = true;
+    last = false;
+    //row 2 Johansen
+    for(int n=0;n<this->null_hyp_grid.size();n++)
+    {
+        if(!this->rejections_johansen(0,0,n) && first)
+        {
+            this->marginal_interval(1,0) = this->null_hyp_grid[n];
+            first = false;
+        }
+        if(this->rejections_johansen(0,0,n) && !first && !last)
+        {
+            this->marginal_interval(1,1) = this->null_hyp_grid[n-1];
+            last = true;
+        }
+    }
+
+    //size
+
+    this->marginal_interval(0,2) = target_size;
+    this->marginal_interval(1,2) = target_size;
+
+    //root bottom
+    this->marginal_interval(0,3) = this->lambda_lu_vec.back();
+    this->marginal_interval(1,3) = 1;
+
+    //lag order
+    this->marginal_interval(0,4) = lag_order;
+    this->marginal_interval(1,4) = lag_order;
+
+    const std::string filename = "marginal_interval";
+    writeToCSVfile(outputPath+filename+".csv",this->marginal_interval);
+
+
 }
 
 
